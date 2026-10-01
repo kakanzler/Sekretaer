@@ -1,0 +1,14 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "Minimal IPC surface for the main window: receive sidecar state events and call the three app commands. No shell, fs, opener or wildcard permissions (spec §11).",
+  "local": true,
+  "windows": ["main"],
+  "permissions": [
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    "allow-sidecar-connection",
+    "allow-sidecar-restart",
+    "allow-open-privacy-settings"
+  ]
+}

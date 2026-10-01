@@ -1,0 +1,13 @@
+{
+  "name": "sekretaer",
+  "private": true,
+  "description": "Sekretär — AI meeting assistant (Tauri shell + Next.js UI + Python sidecar)",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev:web": "pnpm --filter @sekretaer/web dev",
+    "build:web": "pnpm --filter @sekretaer/web build",
+    "test:web": "pnpm --filter @sekretaer/web test"
+  }
+}

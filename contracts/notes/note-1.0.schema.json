@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sekretaer.local/contracts/notes/note-1.0.schema.json",
+  "title": "Sekretär meeting note revision",
+  "description": "Structured note produced by incremental summarization (spec §6, §7). Times are integer milliseconds from meeting start. certainty numbers are model-derived hints, not calibrated probabilities.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "meetingId", "revisionId", "generatedAt", "coverage", "cornell", "bullets", "decisions", "actions", "openQuestions"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "meetingId": { "$ref": "#/$defs/uuid" },
+    "revisionId": { "$ref": "#/$defs/uuid" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fromMs", "toMs"],
+      "properties": {
+        "fromMs": { "$ref": "#/$defs/ms" },
+        "toMs": { "$ref": "#/$defs/ms" }
+      }
+    },
+    "cornell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cues", "notes", "summary"],
+      "properties": {
+        "cues": { "type": "array", "items": { "$ref": "#/$defs/evidencedText" } },
+        "notes": {
+          "type": "array",
+          "items": {
+            "allOf": [{ "$ref": "#/$defs/evidencedText" }],
+            "properties": { "certainty": { "$ref": "#/$defs/certaintyLabel" } },
+            "unevaluatedProperties": false
+          }
+        },
+        "summary": { "type": "string" },
+        "sections": {
+          "description": "Per-breakpoint Cornell sections; the top-level cues/notes/summary describe the whole meeting.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["fromMs", "toMs", "summary"],
+            "properties": {
+              "fromMs": { "$ref": "#/$defs/ms" },
+              "toMs": { "$ref": "#/$defs/ms" },
+              "summary": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "bullets": { "type": "array", "items": { "$ref": "#/$defs/bullet" } },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "allOf": [{ "$ref": "#/$defs/evidencedText" }],
+        "required": ["id", "status", "certainty"],
+        "properties": {
+          "id": { "$ref": "#/$defs/uuid" },
+          "status": { "enum": ["proposed", "agreed", "withdrawn", "needs_review"] },
+          "atMs": { "$ref": "#/$defs/ms" },
+          "certainty": { "type": "number", "minimum": 0, "maximum": 1 }
+        },
+        "unevaluatedProperties": false
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "allOf": [{ "$ref": "#/$defs/evidencedText" }],
+        "required": ["id", "assignee", "dueDate", "status", "confirmed"],
+        "properties": {
+          "id": { "$ref": "#/$defs/uuid" },
+          "assignee": { "type": ["string", "null"] },
+          "dueDate": {
+            "description": "Verbatim due expression as spoken (e.g. \"来週金曜\"). Relative dates are NOT converted to absolute dates.",
+            "type": ["string", "null"]
+          },
+          "status": { "enum": ["open", "in_progress", "done", "canceled"] },
+          "confirmed": { "type": "boolean" },
+          "origin": { "enum": ["ai", "user"] }
+        },
+        "unevaluatedProperties": false
+      }
+    },
+    "openQuestions": { "type": "array", "items": { "$ref": "#/$defs/evidencedText" } }
+  },
+  "$defs": {
+    "uuid": { "type": "string", "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" },
+    "ms": { "type": "integer", "minimum": 0 },
+    "certaintyLabel": { "enum": ["stated", "inferred", "uncertain"] },
+    "evidencedText": {
+      "description": "Every item carries >=1 evidence segment id, or an empty array plus noEvidenceReason (spec §6).",
+      "type": "object",
+      "required": ["text", "evidenceSegmentIds"],
+      "properties": {
+        "text": { "type": "string", "minLength": 1 },
+        "evidenceSegmentIds": { "type": "array", "items": { "$ref": "#/$defs/uuid" }, "uniqueItems": true },
+        "noEvidenceReason": { "type": "string", "minLength": 1 }
+      },
+      "if": { "properties": { "evidenceSegmentIds": { "maxItems": 0 } } },
+      "then": { "required": ["noEvidenceReason"] }
+    },
+    "bullet": {
+      "allOf": [{ "$ref": "#/$defs/evidencedText" }],
+      "required": ["id", "children"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/bullet" } },
+        "certainty": { "$ref": "#/$defs/certaintyLabel" }
+      },
+      "unevaluatedProperties": false
+    }
+  }
+}

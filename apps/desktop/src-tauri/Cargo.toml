@@ -1,0 +1,30 @@
+[package]
+name = "sekretaer-desktop"
+version = "0.1.0"
+description = "Sekretär desktop shell: hosts the static UI and supervises the Python sidecar"
+edition = "2021"
+rust-version = "1.90"
+publish = false
+
+[lib]
+name = "sekretaer_desktop_lib"
+crate-type = ["rlib"]
+
+[[bin]]
+name = "sekretaer-desktop"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2.7", features = [] }
+
+[dependencies]
+# No tauri plugins on purpose: no shell / fs / opener plugin (spec §11).
+tauri = { version = "2.12", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["io-util", "macros", "net", "process", "rt", "sync", "time"] }
+log = "0.4"
+env_logger = "0.11"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["io-util", "macros", "net", "process", "rt", "rt-multi-thread", "sync", "time"] }

@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sekretaer.local/contracts/events/event-1.0.schema.json",
+  "title": "Sekretär WebSocket event envelope (WS /api/v1/events)",
+  "description": "seq is a global monotonically increasing integer per sidecar database. Clients reconnect with ?cursor=<last seq> to receive missed events (spec §8).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event", "eventId", "seq", "occurredAt", "data"],
+  "properties": {
+    "event": {
+      "enum": [
+        "meeting.state",
+        "transcript.partial",
+        "transcript.final",
+        "summary.queued",
+        "summary.updated",
+        "job.failed",
+        "audio.gap",
+        "audio.level",
+        "privacy.state",
+        "warning"
+      ]
+    },
+    "eventId": { "type": "string" },
+    "meetingId": { "type": ["string", "null"] },
+    "seq": { "type": "integer", "minimum": 1 },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "data": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "event": { "const": "meeting.state" } } },
+      "then": { "properties": { "data": { "required": ["state"], "properties": { "state": { "enum": ["preparing", "recording", "finalizing", "completed", "error", "deleting", "deleted"] }, "degraded": { "type": "array", "items": { "type": "string" } } } } } }
+    },
+    {
+      "if": { "properties": { "event": { "enum": ["transcript.partial", "transcript.final"] } } },
+      "then": { "properties": { "data": { "required": ["segmentId", "startMs", "endMs", "text", "source"], "properties": { "segmentId": { "type": "string" }, "startMs": { "type": "integer" }, "endMs": { "type": "integer" }, "text": { "type": "string" }, "source": { "enum": ["microphone", "system"] }, "revision": { "type": "integer" } } } } }
+    },
+    {
+      "if": { "properties": { "event": { "const": "summary.queued" } } },
+      "then": { "properties": { "data": { "required": ["jobId", "trigger"], "properties": { "jobId": { "type": "string" }, "trigger": { "enum": ["silence", "long_speech", "manual", "final"] } } } } }
+    },
+    {
+      "if": { "properties": { "event": { "const": "summary.updated" } } },
+      "then": { "properties": { "data": { "required": ["jobId", "revisionId"], "properties": { "jobId": { "type": "string" }, "revisionId": { "type": "string" }, "conflict": { "type": "boolean" } } } } }
+    },
+    {
+      "if": { "properties": { "event": { "const": "job.failed" } } },
+      "then": { "properties": { "data": { "required": ["jobId", "errorCode"], "properties": { "jobId": { "type": "string" }, "errorCode": { "type": "string" }, "retryAfter": { "type": ["string", "null"] }, "willRetry": { "type": "boolean" } } } } }
+    },
+    {
+      "if": { "properties": { "event": { "const": "audio.gap" } } },
+      "then": { "properties": { "data": { "required": ["sourceId", "atMs", "gapMs", "reason"] } } }
+    }
+  ]
+}
